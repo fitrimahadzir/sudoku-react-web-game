@@ -380,10 +380,10 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   const remainingCounts = getRemainingCounts();
 
   return (
-    <div className="min-h-screen bg-[#5A8DF3] relative font-sans text-white overflow-x-hidden flex justify-center lg:items-center">
+    <div className="min-h-screen bg-[#5A8DF3] relative font-sans text-white overflow-x-hidden flex justify-center md:items-center">
 
       <div className={cn(
-        "relative z-10 w-full px-4 pt-4 lg:pt-0 pb-8 flex flex-col items-center transition-all duration-500",
+        "relative z-10 w-full px-4 pt-4 md:pt-0 pb-8 flex flex-col items-center transition-all duration-500",
         layoutMode === 'dashboard' ? "max-w-[1000px]" : "max-w-[440px]"
       )}>
         {/* Logo */}
