@@ -1,0 +1,6 @@
+{
+  "name": "Sadoku",
+  "description": "A challenging Sudoku app with multiple difficulty levels, including the hardcore 'Sado' mode. Train your brain and improve your logic.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
