@@ -642,7 +642,9 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                                isComplete ? "text-slate-500" : (isNotesMode ? "text-slate-700 font-extrabold" : "text-[#1D4ED8]")
                              )}>{num}</span>
                              {difficulty !== 'sado' && (
-                               <span className={cn("text-[12px] sm:text-sm font-medium", isComplete ? "text-slate-500" : "text-slate-500")}>{remainingCounts[num - 1]}</span>
+                               <span className={cn("text-[12px] sm:text-sm font-medium", isComplete ? "text-slate-500" : "text-slate-500")}>
+                                 {9 - remainingCounts[num - 1]}<span className="opacity-50">/9</span>
+                               </span>
                              )}
                           </button>
                         );
@@ -670,7 +672,9 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                                isComplete ? "text-slate-500" : (isNotesMode ? "text-slate-700 font-extrabold" : "text-[#1D4ED8]")
                              )}>{num}</span>
                              {difficulty !== 'sado' && (
-                               <span className={cn("text-[11px] font-medium", isComplete ? "text-slate-500" : "text-slate-500")}>{remainingCounts[num - 1]}</span>
+                               <span className={cn("text-[11px] font-medium", isComplete ? "text-slate-500" : "text-slate-500")}>
+                                 {9 - remainingCounts[num - 1]}<span className="opacity-50">/9</span>
+                               </span>
                              )}
                           </button>
                         );
