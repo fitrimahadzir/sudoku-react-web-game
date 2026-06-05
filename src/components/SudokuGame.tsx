@@ -233,12 +233,18 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
     const socket = socketRef.current;
 
     const handleChat = (data: { nickname: string, comment: string }) => {
-      const match = data.comment.match(/^\s*([a-iA-I])([1-9])\s*([1-9])\s*$/);
+      const match = data.comment.match(/^\s*(?:([a-iA-I])([1-9])|([1-9])([a-iA-I]))\s*([1-9])\s*$/);
       if (match) {
-        const c = match[1].toUpperCase().charCodeAt(0) - 65; 
-        const r = parseInt(match[2], 10) - 1; 
-        const value = parseInt(match[3], 10);
-        applyInput(r, c, value, true, 'tiktok'); // force value input
+        let c: number, r: number;
+        if (match[1]) {
+          c = match[1].toUpperCase().charCodeAt(0) - 65;
+          r = parseInt(match[2], 10) - 1;
+        } else {
+          r = parseInt(match[3], 10) - 1;
+          c = match[4].toUpperCase().charCodeAt(0) - 65;
+        }
+        const value = parseInt(match[5], 10);
+        applyInput(r, c, value, true, 'tiktok');
       }
     };
 
