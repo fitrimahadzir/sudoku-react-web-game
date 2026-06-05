@@ -34,6 +34,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   const [tiktokStatus, setTiktokStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
   const [tiktokError, setTiktokError] = useState("");
   const socketRef = useRef<Socket | null>(null);
+  const errorTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const mistakeLimit = tiktokStatus === 'connected' ? Infinity : 5;
 
@@ -111,6 +112,9 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
     const cell = boardState.grid[r][c];
 
     if (cell.isInitial) return;
+
+    // Host cannot delete a correct viewer answer
+    if (source === 'user' && value === 0 && cell.source === 'tiktok' && cell.value === cell.solutionValue) return;
 
     if (!hasStarted && value !== 0) {
       setHasStarted(true);
@@ -209,6 +213,21 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
 
     if (isError) {
       setMistakes(m => m + 1);
+    }
+
+    const key = `${r}-${c}`;
+    const existing = errorTimeoutsRef.current.get(key);
+    if (existing) clearTimeout(existing);
+    if (isError && source === 'user' && value !== 0) {
+      errorTimeoutsRef.current.set(key, setTimeout(() => {
+        setBoardState(prev => {
+          if (!prev) return prev;
+          const g = prev.grid.map(row => [...row]);
+          g[r][c] = { ...g[r][c], value: 0, isError: false, source: undefined };
+          return { ...prev, grid: g };
+        });
+        errorTimeoutsRef.current.delete(key);
+      }, 5000));
     }
 
     setBoardState({ ...boardState, grid: newGrid });
@@ -527,16 +546,21 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
              {isLayoutLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
            </button>
            <button
-            onClick={() => tiktokStatus === "connected" ? disconnectTikTok() : setIsTiktokModalOpen(true)}
+            onClick={() => setIsTiktokModalOpen(true)}
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-              tiktokStatus === "connected" ? "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20" : 
+              tiktokStatus === "connected" ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" : 
               tiktokStatus === "connecting" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : 
               "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20"
             )}
            >
-             {tiktokStatus === "connecting" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radio className="w-3.5 h-3.5" />} 
-             {tiktokStatus === "connected" ? "Stop Live" : tiktokStatus === "connecting" ? "Connecting..." : "TikTok Live"}
+             <span className="relative">
+               {tiktokStatus === "connecting" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radio className="w-3.5 h-3.5" />}
+               {tiktokStatus === "connected" && (
+                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-300 rounded-full animate-pulse" />
+               )}
+             </span>
+             {tiktokStatus === "connecting" ? "Connecting..." : "TikTok Live"}
            </button>
         </div>
 
