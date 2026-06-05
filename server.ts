@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
@@ -40,10 +41,12 @@ async function startServer() {
         }
 
         currentUsername = username;
+        const signApiKey = process.env.TIKTOK_SIGN_API_KEY;
         const tiktokLiveConnection = new WebcastPushConnection(username, {
           processInitialData: false,
           enableExtendedGiftInfo: true,
           requestPollingIntervalMs: 2000,
+          ...(signApiKey ? { signApiKey } : {}),
           clientParams: {
             "app_language": "en-US",
             "device_platform": "web"
