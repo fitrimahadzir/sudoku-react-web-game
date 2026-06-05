@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { generateSudokuBoard, SudokuBoardState, SudokuCell, checkCompletion, Difficulty } from '../lib/sudoku';
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
-import { DEBUG_MODE } from '../constants';
+
 import { Loader2, CheckCircle2, RotateCcw, Eraser, Camera, Undo2, Delete, Lightbulb, CircleDot, ChevronLeft, Pencil, LayoutGrid, LayoutList, Lock, Unlock, Radio } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { io, Socket } from 'socket.io-client';
@@ -991,7 +991,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                 </button>
             </div>
             
-            {DEBUG_MODE && (
+            {import.meta.env.VITE_DEV_MODE === 'true' && (
                <button onClick={handleAutoWin} className="w-full mt-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-[10px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">
                   Auto Resolve
                </button>
