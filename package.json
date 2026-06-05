@@ -29,7 +29,7 @@
     "socket.io-client": "^4.8.3",
     "sudoku-gen": "^1.0.2",
     "tailwind-merge": "^3.5.0",
-    "tiktok-live-connector": "^2.1.1-beta1",
+    "tiktok-live-connector": "0.9.19",
     "vite": "^6.2.0"
   },
   "devDependencies": {

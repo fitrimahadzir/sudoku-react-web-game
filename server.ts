@@ -40,19 +40,15 @@ async function startServer() {
         }
 
         currentUsername = username;
-        const options: any = {
+        const tiktokLiveConnection = new WebcastPushConnection(username, {
           processInitialData: false,
           enableExtendedGiftInfo: true,
           requestPollingIntervalMs: 2000,
-          disableEulerFallbacks: true,
-          connectWithUniqueId: true,
           clientParams: {
             "app_language": "en-US",
             "device_platform": "web"
           }
-        };
-
-        const tiktokLiveConnection = new WebcastPushConnection(username, options);
+        });
 
         currentTiktokConnection = tiktokLiveConnection;
         activeConnections.set(username, tiktokLiveConnection);
