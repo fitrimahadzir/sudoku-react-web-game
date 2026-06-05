@@ -741,11 +741,9 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                                       textClass = "text-[#1D4ED8] font-normal";
                                       if (tiktokStatus === 'connected') {
                                           if (cell.source === 'tiktok') {
-                                              textClass = "text-[#1D4ED8] font-bold";
-                                              if (!isConflicting) bgClass = "bg-purple-200";
+                                              textClass = "text-purple-600 font-bold";
                                           } else {
-                                              textClass = "text-[#1D4ED8] font-bold";
-                                              if (!isConflicting) bgClass = "bg-emerald-100";
+                                              textClass = "text-emerald-500 font-bold";
                                           }
                                       }
                                      if (cell.isError) {
