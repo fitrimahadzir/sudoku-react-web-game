@@ -35,7 +35,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   const [tiktokError, setTiktokError] = useState("");
   const socketRef = useRef<Socket | null>(null);
 
-  const mistakeLimit = tiktokStatus === 'connected' ? 10 : 5;
+  const mistakeLimit = tiktokStatus === 'connected' ? Infinity : 5;
 
   useEffect(() => {
     isLayoutLockedRef.current = isLayoutLocked;
@@ -666,7 +666,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                               </div>
                               <h2 className="text-3xl font-bold text-rose-500 mt-2">Game Over!</h2>
                               <p className="text-slate-500 font-medium text-lg leading-snug">
-                                You have made {mistakeLimit} mistakes.<br/>Don't give up!
+                                 You have made {mistakes} mistake{mistakes !== 1 && 's'}.<br/>Don't give up!
                               </p>
                               <div className="flex gap-2 w-full mt-4">
                                 <button onClick={onBack} className="flex-1 py-3 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-md hover:bg-slate-300 transition-colors">
@@ -820,7 +820,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
             {difficulty !== 'sado' ? (
               <div className="w-full flex items-center justify-between mb-6 px-1">
                  <span className="text-white/90 font-light text-xs sm:text-sm capitalize">{difficulty === 'expert' ? 'Expert' : difficulty === 'hard' ? 'Hard' : difficulty === 'medium' ? 'Medium' : 'Beginner'}</span>
-                 <span className="text-white/90 font-light text-xs sm:text-sm">Mistakes: {mistakes}/{mistakeLimit}</span>
+                 <span className="text-white/90 font-light text-xs sm:text-sm">Mistakes: {mistakes}/{mistakeLimit === Infinity ? '∞' : mistakeLimit}</span>
                  <span className="text-white/90 font-light text-xs sm:text-sm">{formatTime(elapsedTime)}</span>
                  <span className="text-white/90 font-light text-xs sm:text-sm">Hints: {hintsRemaining}/3</span>
               </div>
