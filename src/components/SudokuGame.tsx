@@ -3,7 +3,7 @@ import { generateSudokuBoard, SudokuBoardState, SudokuCell, checkCompletion, Dif
 import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
 
-import { Loader2, CheckCircle2, RotateCcw, Eraser, Camera, Undo2, Delete, Lightbulb, CircleDot, ChevronLeft, Pencil, LayoutGrid, LayoutList, Lock, Unlock, Radio } from 'lucide-react';
+import { Loader2, CheckCircle2, RotateCcw, Eraser, Camera, Undo2, Delete, Lightbulb, CircleDot, ChevronLeft, Pencil, LayoutGrid, LayoutList, Lock, Unlock, Radio, Home, ArrowRight, User, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { io, Socket } from 'socket.io-client';
 
@@ -506,6 +506,9 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   };
   const remainingCounts = getRemainingCounts();
 
+  const hostScore = boardState?.grid.flat().filter(cell => !cell.isInitial && cell.value !== 0 && !cell.isError && cell.source !== 'tiktok').length || 0;
+  const viewerScore = boardState?.grid.flat().filter(cell => !cell.isInitial && cell.value !== 0 && !cell.isError && cell.source === 'tiktok').length || 0;
+
   return (
     <div className="min-h-screen bg-[#5A8DF3] relative font-sans text-white overflow-x-hidden flex justify-center md:items-center">
 
@@ -654,57 +657,101 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                   <AnimatePresence>
                      {(isCompleted || (difficulty !== 'sado' && mistakes >= mistakeLimit)) && (
                        <motion.div
-                         initial={{ opacity: 0, scale: 0.95 }}
-                         animate={{ opacity: 1, scale: 1 }}
-                         className="absolute inset-0 z-20 flex items-center justify-center bg-white/90 backdrop-blur-sm"
+                         initial={{ opacity: 0 }}
+                         animate={{ opacity: 1 }}
+                         exit={{ opacity: 0 }}
+                         className="fixed inset-0 z-50 bg-[#0A1128] flex flex-col items-center justify-center p-4 overflow-hidden"
                        >
+                         {/* Optional background radial gradient for extra depth */}
+                         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#1a2b5e_0%,transparent_70%)] pointer-events-none opacity-50"></div>
+                         
                          {isCompleted ? (
-                           <div className="flex flex-col items-center gap-3 text-center px-4 w-full">
-                              <div className="flex items-center justify-center text-5xl mb-2">
-                                 🏆
+                           <div className="relative z-10 flex flex-col items-center w-full max-w-md mx-auto">
+                              <div className="relative mb-6">
+                                <div className="absolute inset-0 bg-yellow-500/30 blur-3xl rounded-full"></div>
+                                <div className="text-8xl relative z-10 drop-shadow-[0_0_20px_rgba(250,204,21,0.6)]">
+                                   🏆
+                                </div>
                               </div>
-                              <h2 className="text-3xl font-bold text-[#1D4ED8] mt-2">Congratulations!</h2>
-                               <p className="text-slate-500 font-medium text-lg leading-snug">
-                                 You solved this puzzle in {formatTime(elapsedTime)}<br/>
-                                 with {mistakes} mistake{mistakes !== 1 && 's'}.
-                               </p>
-                               {(fillCounts.host > 0 || fillCounts.viewer > 0) && (
-                                 <div className="flex gap-6 mt-2">
-                                   <div className="flex items-center gap-2">
-                                     <span className="w-3 h-3 rounded-full bg-emerald-100 border border-emerald-300"></span>
-                                     <span className="text-slate-600 text-sm font-medium">Host: {fillCounts.host}</span>
+                              
+                              <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight drop-shadow-lg mb-2 text-center uppercase">
+                                 Congratulations!
+                              </h2>
+                              <p className="text-slate-300 font-medium mb-6 text-center">
+                                 You solved this puzzle in
+                              </p>
+
+                              {/* Time Badge */}
+                              <div className="bg-[#131D3A] border border-slate-700/50 rounded-full px-8 py-3 flex items-center justify-center gap-3 mb-4 shadow-xl relative overflow-hidden">
+                                 <Clock className="w-5 h-5 text-slate-400" />
+                                 <span className="text-white text-4xl font-bold font-mono tracking-wider">{formatTime(elapsedTime)}</span>
+                              </div>
+                              
+                              <p className="text-sm font-medium text-slate-400 mb-8">
+                                with <span className={mistakes === 0 ? "text-emerald-400" : "text-rose-400"}>{mistakes}</span> mistake{mistakes !== 1 ? 's' : ''}.
+                              </p>
+
+                              {/* Versus Container */}
+                              <div className="flex items-center gap-4 mb-10 w-full px-2">
+                                {/* Host Card */}
+                                <div className="flex-1 bg-white/[0.03] border border-white/5 rounded-3xl p-5 flex flex-col items-center justify-center gap-3 shadow-2xl relative overflow-hidden backdrop-blur-sm">
+                                   <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent pointer-events-none"></div>
+                                   <div className="w-12 h-12 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center justify-center -mt-2">
+                                     <User className="w-6 h-6 text-white" />
                                    </div>
-                                   <div className="flex items-center gap-2">
-                                     <span className="w-3 h-3 rounded-full bg-purple-200 border border-purple-300"></span>
-                                     <span className="text-slate-600 text-sm font-medium">Viewer: {fillCounts.viewer}</span>
+                                   <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-1">Host</span>
+                                   <span className="text-4xl font-black text-emerald-400 leading-none">{hostScore}</span>
+                                </div>
+
+                                {/* VS text */}
+                                <div className="text-2xl font-black italic text-blue-500/60 shrink-0 drop-shadow-md">
+                                  Vs
+                                </div>
+
+                                {/* Viewer Card */}
+                                <div className="flex-1 bg-white/[0.03] border border-white/5 rounded-3xl p-5 flex flex-col items-center justify-center gap-3 shadow-2xl relative overflow-hidden backdrop-blur-sm">
+                                   <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none"></div>
+                                   <div className="w-12 h-12 rounded-full bg-purple-400 shadow-[0_0_15px_rgba(192,132,252,0.5)] flex items-center justify-center -mt-2">
+                                     <User className="w-6 h-6 text-white" />
                                    </div>
-                                 </div>
-                               )}
-                              <div className="flex gap-2 w-full mt-4">
-                                <button onClick={onBack} className="flex-1 py-3 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-md hover:bg-slate-300 transition-colors">
-                                  Home
-                                </button>
-                                <button onClick={fetchBoard} className="flex-1 py-3 bg-[#1D4ED8] text-white font-bold rounded-xl shadow-md hover:bg-[#1e40af] transition-colors">
-                                  Play Again
-                                </button>
+                                   <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-1">Viewer</span>
+                                   <span className="text-4xl font-black text-purple-400 leading-none">{viewerScore}</span>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex gap-4 w-full px-2">
+                                 <button onClick={onBack} className="flex-1 flex items-center justify-center gap-2 py-4 bg-[#1E2943] hover:bg-[#2A3B5E] text-white font-semibold rounded-2xl transition-all shadow-lg active:scale-95">
+                                    <Home className="w-5 h-5" /> Home
+                                 </button>
+                                 <button onClick={fetchBoard} className="flex-[1.5] flex items-center justify-center gap-2 py-4 bg-[#2563EB] hover:bg-[#3B82F6] text-white font-semibold rounded-2xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95">
+                                    <ArrowRight className="w-5 h-5" /> Play Again
+                                 </button>
                               </div>
                            </div>
                          ) : (
-                           <div className="flex flex-col items-center gap-3 text-center px-4 w-full">
-                              <div className="flex items-center justify-center text-5xl mb-2">
-                                 ❌
+                           <div className="relative z-10 flex flex-col items-center w-full max-w-md mx-auto">
+                              <div className="relative mb-6">
+                                <div className="absolute inset-0 bg-rose-500/30 blur-3xl rounded-full"></div>
+                                <div className="text-8xl relative z-10 drop-shadow-[0_0_20px_rgba(225,29,72,0.6)]">
+                                   ❌
+                                </div>
                               </div>
-                              <h2 className="text-3xl font-bold text-rose-500 mt-2">Game Over!</h2>
-                              <p className="text-slate-500 font-medium text-lg leading-snug">
-                                 You have made {mistakes} mistake{mistakes !== 1 && 's'}.<br/>Don't give up!
+                              <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-lg mb-4 uppercase text-center">
+                                 Game Over
+                              </h2>
+                              <p className="text-slate-300 font-medium mb-10 text-center">
+                                 You made {mistakeLimit} mistakes.<br/>Don't give up!
                               </p>
-                              <div className="flex gap-2 w-full mt-4">
-                                <button onClick={onBack} className="flex-1 py-3 bg-slate-200 text-slate-700 font-bold rounded-xl shadow-md hover:bg-slate-300 transition-colors">
-                                  Home
-                                </button>
-                                <button onClick={fetchBoard} className="flex-1 py-3 bg-[#1D4ED8] text-white font-bold rounded-xl shadow-md hover:bg-[#1e40af] transition-colors">
-                                  Try Again
-                                </button>
+
+                              {/* Action Buttons */}
+                              <div className="flex gap-4 w-full px-2">
+                                 <button onClick={onBack} className="flex-1 flex items-center justify-center gap-2 py-4 bg-[#1E2943] hover:bg-[#2A3B5E] text-white font-semibold rounded-2xl transition-all shadow-lg active:scale-95">
+                                    <Home className="w-5 h-5" /> Home
+                                 </button>
+                                 <button onClick={fetchBoard} className="flex-[1.5] flex items-center justify-center gap-2 py-4 bg-[#2563EB] hover:bg-[#3B82F6] text-white font-semibold rounded-2xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95">
+                                    <RotateCcw className="w-5 h-5" /> Try Again
+                                 </button>
                               </div>
                            </div>
                          )}
