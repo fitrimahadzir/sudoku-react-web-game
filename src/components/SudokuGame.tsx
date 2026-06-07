@@ -113,8 +113,8 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
 
     if (cell.isInitial) return;
 
-    // Host cannot delete a correct viewer answer
-    if (source === 'user' && value === 0 && cell.source === 'tiktok' && cell.value === cell.solutionValue) return;
+    // Prevent host and viewer from overwriting each other's answers
+    if (cell.value !== 0 && cell.source && cell.source !== source) return;
 
     if (!hasStarted && value !== 0) {
       setHasStarted(true);
