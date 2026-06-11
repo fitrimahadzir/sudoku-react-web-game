@@ -36,6 +36,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   const [tiktokError, setTiktokError] = useState("");
   const socketRef = useRef<Socket | null>(null);
   const errorTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const tiktokErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -46,6 +47,9 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   }>({ isOpen: false, title: '', message: '', confirmLabel: 'Confirm', onConfirm: () => {} });
 
   const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
+  const [viewerLeaderboard, setViewerLeaderboard] = useState<Record<string, { score: number; profilePictureUrl: string }>>({});
+  const lastTiktokNicknameRef = useRef<string | null>(null);
+  const lastTiktokProfilePicRef = useRef<string>('');
 
   const mistakeLimit = tiktokStatus === 'connected' ? Infinity : 5;
 
@@ -241,6 +245,23 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
       }, 5000));
     }
 
+    if (source === 'tiktok' && value !== 0 && !isError) {
+      const nickname = lastTiktokNicknameRef.current;
+      const profilePictureUrl = lastTiktokProfilePicRef.current;
+      if (nickname) {
+        setViewerLeaderboard(prev => {
+          const existing = prev[nickname];
+          return {
+            ...prev,
+            [nickname]: {
+              score: (existing?.score || 0) + 1,
+              profilePictureUrl: existing?.profilePictureUrl || profilePictureUrl,
+            }
+          };
+        });
+      }
+    }
+
     setBoardState({ ...boardState, grid: newGrid });
 
     if (checkCompletion(newGrid)) {
@@ -262,7 +283,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
 
     const socket = socketRef.current;
 
-    const handleChat = (data: { nickname: string, comment: string }) => {
+    const handleChat = (data: { nickname: string, comment: string, profilePictureUrl?: string }) => {
       const match = data.comment.match(/^\s*(?:([a-iA-I])([1-9])|([1-9])([a-iA-I]))\s*([1-9])\s*$/);
       if (match) {
         let c: number, r: number;
@@ -274,23 +295,37 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
           c = match[4].toUpperCase().charCodeAt(0) - 65;
         }
         const value = parseInt(match[5], 10);
+        lastTiktokNicknameRef.current = data.nickname;
+        lastTiktokProfilePicRef.current = data.profilePictureUrl || '';
         applyInput(r, c, value, true, 'tiktok');
       }
     };
 
     const handleConnected = () => {
+      if (tiktokErrorTimeoutRef.current) {
+        clearTimeout(tiktokErrorTimeoutRef.current);
+        tiktokErrorTimeoutRef.current = null;
+      }
       setTiktokStatus("connected");
       setTiktokError("");
     };
 
     const handleDisconnected = (reason: string) => {
+      if (tiktokErrorTimeoutRef.current) {
+        clearTimeout(tiktokErrorTimeoutRef.current);
+        tiktokErrorTimeoutRef.current = null;
+      }
       setTiktokStatus("disconnected");
       setTiktokError(reason);
     };
 
     const handleError = (error: string) => {
-      setTiktokStatus("disconnected");
-      setTiktokError(error);
+      if (tiktokErrorTimeoutRef.current) clearTimeout(tiktokErrorTimeoutRef.current);
+      tiktokErrorTimeoutRef.current = setTimeout(() => {
+        setTiktokStatus("disconnected");
+        setTiktokError(error);
+        tiktokErrorTimeoutRef.current = null;
+      }, 2000);
     };
 
     socket.on('tiktok_chat', handleChat);
@@ -309,7 +344,12 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   const connectTikTok = (e: React.FormEvent) => {
     e.preventDefault();
     if (tiktokUsername.trim() && socketRef.current) {
+      if (tiktokErrorTimeoutRef.current) {
+        clearTimeout(tiktokErrorTimeoutRef.current);
+        tiktokErrorTimeoutRef.current = null;
+      }
       setTiktokStatus("connecting");
+      setTiktokError("");
       socketRef.current.emit("connect_tiktok", tiktokUsername.trim());
       setIsTiktokModalOpen(false);
     }
@@ -317,6 +357,10 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
 
   const disconnectTikTok = () => {
     if (socketRef.current) {
+      if (tiktokErrorTimeoutRef.current) {
+        clearTimeout(tiktokErrorTimeoutRef.current);
+        tiktokErrorTimeoutRef.current = null;
+      }
       socketRef.current.emit("disconnect_tiktok");
     }
   };
@@ -1069,11 +1113,10 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                <button onClick={() => setConfirmDialog({ isOpen: true, title: 'Auto Resolve', message: 'Are you sure you want to auto resolve the puzzle? The board will be filled with the solution.', confirmLabel: 'Auto Resolve', onConfirm: handleAutoWin })} className="w-full mt-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-[10px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">
                   Auto Resolve
                </button>
-            )}
+             )}
+           </div>
           </div>
         </div>
-
-      </div>
 
       <AdminSidebar
         isOpen={adminSidebarOpen}
@@ -1086,6 +1129,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
         onConnectTikTok={connectTikTok}
         onDisconnectTikTok={disconnectTikTok}
         socketId={socketRef.current?.id}
+        viewerLeaderboard={viewerLeaderboard}
       />
     </div>
   );
