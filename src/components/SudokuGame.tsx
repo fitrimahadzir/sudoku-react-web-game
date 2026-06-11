@@ -6,6 +6,7 @@ import confetti from 'canvas-confetti';
 import { Loader2, CheckCircle2, RotateCcw, Eraser, Camera, Undo2, Delete, Lightbulb, CircleDot, ChevronLeft, Pencil, LayoutGrid, LayoutList, Lock, Unlock, Radio, Home, ArrowRight, User, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { io, Socket } from 'socket.io-client';
+import AdminSidebar from './AdminSidebar';
 
 interface SudokuGameProps {
   difficulty: Difficulty;
@@ -35,6 +36,16 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
   const [tiktokError, setTiktokError] = useState("");
   const socketRef = useRef<Socket | null>(null);
   const errorTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', confirmLabel: 'Confirm', onConfirm: () => {} });
+
+  const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
 
   const mistakeLimit = tiktokStatus === 'connected' ? Infinity : 5;
 
@@ -516,15 +527,6 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
         "relative z-10 w-full px-4 pt-4 md:pt-0 pb-8 flex flex-col items-center transition-all duration-500",
         layoutMode === 'dashboard' ? "max-w-[1000px]" : "max-w-[440px]"
       )}>
-        {/* Logo */}
-        <div className="w-full flex items-center justify-center mb-6 pointer-events-none translate-y-2">
-          <img 
-            src="/images/logo2.svg" 
-            alt="Sadoku Logo" 
-            className="h-7 sm:h-10 object-contain" 
-          />
-        </div>
-
         {/* View Toggle */}
         <div className="w-full flex justify-center gap-2 mb-8 relative z-10">
            <button 
@@ -548,23 +550,7 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
            >
              {isLayoutLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
            </button>
-           <button
-            onClick={() => setIsTiktokModalOpen(true)}
-            className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-              tiktokStatus === "connected" ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" : 
-              tiktokStatus === "connecting" ? "bg-yellow-500 hover:bg-yellow-600 text-white" : 
-              "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20"
-            )}
-           >
-             <span className="relative">
-               {tiktokStatus === "connecting" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radio className="w-3.5 h-3.5" />}
-               {tiktokStatus === "connected" && (
-                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-300 rounded-full animate-pulse" />
-               )}
-             </span>
-             {tiktokStatus === "connecting" ? "Connecting..." : "TikTok Live"}
-           </button>
+
         </div>
 
         {/* TikTok Modal */}
@@ -637,6 +623,47 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
                     </button>
                   </div>
                 </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Confirm Dialog */}
+        <AnimatePresence>
+          {confirmDialog.isOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm"
+              >
+                <h3 className="text-xl font-bold text-slate-800 mb-2">{confirmDialog.title}</h3>
+                <p className="text-sm text-slate-600 mb-6">{confirmDialog.message}</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                    className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                      confirmDialog.onConfirm();
+                    }}
+                    className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition-all"
+                  >
+                    {confirmDialog.confirmLabel}
+                  </button>
+                </div>
               </motion.div>
             </div>
           )}
@@ -1030,16 +1057,16 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
 
             {/* Bottom Actions */}
             <div className="w-full flex justify-between gap-3 mt-6">
-                <button onClick={onBack} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5">
+                <button onClick={() => setConfirmDialog({ isOpen: true, title: 'New Game', message: 'Are you sure you want to start a new game? Your current progress will be lost.', confirmLabel: 'New Game', onConfirm: onBack })} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5">
                     <ChevronLeft className="w-4 h-4" /> New Game
                 </button>
-                <button onClick={resetBoard} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5">
+                <button onClick={() => setConfirmDialog({ isOpen: true, title: 'Restart', message: 'Are you sure you want to restart the puzzle? Your current progress will be lost.', confirmLabel: 'Restart', onConfirm: resetBoard })} className="flex-1 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5">
                     <RotateCcw className="w-4 h-4" /> Restart
                 </button>
             </div>
             
             {import.meta.env.VITE_DEV_MODE === 'true' && (
-               <button onClick={handleAutoWin} className="w-full mt-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-[10px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">
+               <button onClick={() => setConfirmDialog({ isOpen: true, title: 'Auto Resolve', message: 'Are you sure you want to auto resolve the puzzle? The board will be filled with the solution.', confirmLabel: 'Auto Resolve', onConfirm: handleAutoWin })} className="w-full mt-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg text-[10px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">
                   Auto Resolve
                </button>
             )}
@@ -1047,6 +1074,19 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
         </div>
 
       </div>
+
+      <AdminSidebar
+        isOpen={adminSidebarOpen}
+        onOpen={() => setAdminSidebarOpen(true)}
+        onClose={() => setAdminSidebarOpen(false)}
+        tiktokUsername={tiktokUsername}
+        onTiktokUsernameChange={setTiktokUsername}
+        tiktokStatus={tiktokStatus}
+        tiktokError={tiktokError}
+        onConnectTikTok={connectTikTok}
+        onDisconnectTikTok={disconnectTikTok}
+        socketId={socketRef.current?.id}
+      />
     </div>
   );
 }
