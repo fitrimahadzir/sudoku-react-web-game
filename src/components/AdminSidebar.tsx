@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronLeft, ChevronDown, Loader2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronDown, Loader2, LogIn, Shield, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { supabase, type UserProfile, type UserRole } from '../lib/supabase';
 
 const mockLeaderboard: { rank: number; username: string; avatar: string; score: number }[] = [
   { rank: 1, username: 'SudokuMaster', avatar: 'SM', score: 9850 },
@@ -28,6 +29,9 @@ interface AdminSidebarProps {
   onDisconnectTikTok: () => void;
   socketId?: string;
   viewerLeaderboard: Record<string, { score: number; profilePictureUrl: string }>;
+  authUser?: { id: string; email: string } | null;
+  authProfile?: UserProfile | null;
+  onShowAuth?: () => void;
 }
 
 export default function AdminSidebar({
@@ -42,6 +46,9 @@ export default function AdminSidebar({
   onDisconnectTikTok,
   socketId,
   viewerLeaderboard,
+  authUser,
+  authProfile,
+  onShowAuth,
 }: AdminSidebarProps) {
   const leaderboardEntries = Object.entries(viewerLeaderboard)
     .map(([nickname, data]) => ({ nickname, score: data.score, profilePictureUrl: data.profilePictureUrl }))
@@ -106,6 +113,32 @@ export default function AdminSidebar({
                     className="h-12 object-contain"
                   />
                 </div>
+
+                {authUser ? (
+                  <div className="flex items-center justify-between bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3 mb-4">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{authUser.email}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400">{(authProfile?.role || 'basic').toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => supabase.auth.signOut()}
+                      className="text-slate-500 hover:text-rose-400 transition-colors shrink-0"
+                      title="Logout"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={onShowAuth}
+                    className="w-full flex items-center justify-center gap-2 bg-white/[0.03] border border-white/10 hover:border-blue-500/30 rounded-xl px-4 py-3 mb-4 text-xs font-bold text-slate-400 hover:text-white transition-all"
+                  >
+                    <LogIn className="w-4 h-4" /> Host Login
+                  </button>
+                )}
 
                 <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 mb-4">
                   <div className={cn("flex items-center gap-2", tiktokExpanded ? "mb-4" : "")}>

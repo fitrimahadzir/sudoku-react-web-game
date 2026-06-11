@@ -7,13 +7,17 @@ import { Loader2, CheckCircle2, RotateCcw, Eraser, Camera, Undo2, Delete, Lightb
 import { motion, AnimatePresence } from 'motion/react';
 import { io, Socket } from 'socket.io-client';
 import AdminSidebar from './AdminSidebar';
+import type { UserProfile, UserRole } from '../lib/supabase';
 
 interface SudokuGameProps {
   difficulty: Difficulty;
   onBack: () => void;
+  authUser?: { id: string; email: string } | null;
+  authProfile?: UserProfile | null;
+  onShowAuth?: () => void;
 }
 
-export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
+export default function SudokuGame({ difficulty, onBack, authUser, authProfile, onShowAuth }: SudokuGameProps) {
   const [boardState, setBoardState] = useState<SudokuBoardState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCell, setSelectedCell] = useState<{ r: number; c: number } | null>(null);
@@ -1130,6 +1134,9 @@ export default function SudokuGame({ difficulty, onBack }: SudokuGameProps) {
         onDisconnectTikTok={disconnectTikTok}
         socketId={socketRef.current?.id}
         viewerLeaderboard={viewerLeaderboard}
+        authUser={authUser}
+        authProfile={authProfile}
+        onShowAuth={onShowAuth}
       />
     </div>
   );

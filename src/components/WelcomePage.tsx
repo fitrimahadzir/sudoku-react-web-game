@@ -1,14 +1,24 @@
 import React, { useState } from 'react';
 import { Difficulty } from '../lib/sudoku';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play } from 'lucide-react';
+import { Play, LogIn, LogOut, Shield } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import type { UserRole } from '../lib/supabase';
 
 interface WelcomePageProps {
   onDifficultySelect: (diff: Difficulty) => void;
+  isLoggedIn?: boolean;
+  userEmail?: string | null;
+  userRole?: UserRole | null;
+  onShowAuth?: () => void;
 }
 
-export default function WelcomePage({ onDifficultySelect }: WelcomePageProps) {
+export default function WelcomePage({ onDifficultySelect, isLoggedIn, userEmail, userRole, onShowAuth }: WelcomePageProps) {
   const [showPopup, setShowPopup] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const difficulties: { value: Difficulty; label: string; color: string }[] = [
     { value: 'easy', label: 'Easy', color: 'bg-[#5A8DF3]' },
@@ -84,6 +94,29 @@ export default function WelcomePage({ onDifficultySelect }: WelcomePageProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isLoggedIn ? (
+        <div className="absolute top-6 right-6 flex items-center gap-3 z-10">
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2">
+            <Shield className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-medium text-white/80">{userEmail}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">{userRole || 'basic'}</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/30 rounded-full text-xs text-white/60 hover:text-rose-400 transition-all"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Logout
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={onShowAuth}
+          className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full text-xs font-bold text-white/80 hover:text-white transition-all z-10"
+        >
+          <LogIn className="w-4 h-4" /> Host Login
+        </button>
+      )}
 
       <div className="absolute bottom-6 text-center text-white/60 text-xs font-medium leading-relaxed" style={{ fontFamily: "'Poppins', sans-serif" }}>
          @Copyright <a href="https://fitrimahadzir.my" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">fitrimahadzir.my</a>.<br />
