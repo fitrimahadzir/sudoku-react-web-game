@@ -81,10 +81,14 @@ export class EulerStreamProvider extends BaseProvider {
       this.setStatus('connected', `Connected to room ${state.roomId}`);
     } catch (err: any) {
       this.connection = null;
-      const msg = err.message || 'Failed to connect to TikTok Live via EulerStream';
+      const raw = err.message || '';
+      const match = raw.match(/"([^"]+)"/);
+      const msg = match
+        ? `EulerStream: ${match[1]}. Remove TIKTOK_SIGN_API_KEY or get a new key.`
+        : `EulerStream: ${raw}`;
       this.setStatus('error', msg);
       this.emitError(msg);
-      throw err;
+      throw new Error(msg);
     }
   }
 

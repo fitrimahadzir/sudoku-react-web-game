@@ -3,6 +3,10 @@ import { EulerStreamProvider } from './eulerstream-provider';
 import { TikTokLiveConnectorProvider } from './tiktok-live-connector-provider';
 import { MockProvider } from './mock-provider';
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function createProvider(
   type: ProviderType,
   username: string,
@@ -13,19 +17,30 @@ export async function createProvider(
     onLog?.(msg);
   };
 
-  const resolvedType = resolveProviderType(type);
-  const label = resolvedType === 'EULERSTREAM' ? 'EulerStream' : resolvedType === 'TIKTOK_LIVE_CONNECTOR' ? 'TikTok Live Connector' : 'Mock';
+  if (type !== 'AUTO') {
+    const provider = buildProvider(type);
+    await provider.connect(username);
+    return provider;
+  }
 
-  log(`[Provider] Using ${label}`);
+  // AUTO: try EulerStream if key exists, fall back to TLC on failure
+  if (process.env.TIKTOK_SIGN_API_KEY) {
+    try {
+      log('[Provider] Trying EulerStream...');
+      const euler = new EulerStreamProvider();
+      await euler.connect(username);
+      log('[Provider] EulerStream Connected');
+      return euler;
+    } catch (eulerErr: any) {
+      log(`[Provider] EulerStream Failed: ${eulerErr.message}`);
+    }
+    await sleep(500);
+  }
 
-  const provider = buildProvider(resolvedType);
-  await provider.connect(username);
-  return provider;
-}
-
-function resolveProviderType(type: ProviderType): Exclude<ProviderType, 'AUTO'> {
-  if (type !== 'AUTO') return type;
-  return process.env.TIKTOK_SIGN_API_KEY ? 'EULERSTREAM' : 'TIKTOK_LIVE_CONNECTOR';
+  log('[Provider] Using TikTok Live Connector');
+  const tlc = new TikTokLiveConnectorProvider();
+  await tlc.connect(username);
+  return tlc;
 }
 
 function buildProvider(type: Exclude<ProviderType, 'AUTO'>): TikTokProvider {

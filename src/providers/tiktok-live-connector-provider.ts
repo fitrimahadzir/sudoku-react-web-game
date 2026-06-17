@@ -79,10 +79,12 @@ export class TikTokLiveConnectorProvider extends BaseProvider {
       this.setStatus('connected', `Connected to room ${state.roomId}`);
     } catch (err: any) {
       this.connection = null;
-      const msg = err.message || 'Failed to connect to TikTok Live';
+      const raw = err.message || 'Failed to connect to TikTok Live';
+      const match = raw.match(/"([^"]+)"/);
+      const msg = match ? `TikTok Live: ${match[1]}` : `TikTok Live: ${raw}`;
       this.setStatus('error', msg);
       this.emitError(msg);
-      throw err;
+      throw new Error(msg);
     }
   }
 
