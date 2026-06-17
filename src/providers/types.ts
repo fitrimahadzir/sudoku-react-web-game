@@ -1,4 +1,4 @@
-export type ProviderType = 'AUTO' | 'EULERSTREAM' | 'TIKTOK_LIVE_CONNECTOR' | 'MOCK';
+export type ProviderType = 'TIKTOK_LIVE_CONNECTOR' | 'MOCK';
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 

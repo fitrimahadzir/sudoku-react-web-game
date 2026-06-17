@@ -1,6 +1,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
-import type { TikTokProvider, ProviderType, ConnectionStatusEvent, NormalizedComment, NormalizedGift, NormalizedLike } from '../providers/types';
-import { createProvider } from '../providers/factory';
+import type { TikTokProvider, ConnectionStatusEvent, NormalizedComment, NormalizedGift, NormalizedLike } from '../providers/types';
+import { TikTokLiveConnectorProvider } from '../providers/tiktok-live-connector-provider';
+import { MockProvider } from '../providers/mock-provider';
 
 interface ActiveConnection {
   provider: TikTokProvider;
@@ -36,13 +37,16 @@ export class SocketServer {
       cleanup();
       currentUsername = username;
 
-      const providerType = (process.env.TIKTOK_PROVIDER?.toUpperCase() || 'AUTO') as ProviderType;
-      socket.emit('connection_status', { status: 'connecting', provider: providerType });
+      const useMock = process.env.TIKTOK_PROVIDER?.toUpperCase() === 'MOCK';
+
+      socket.emit('connection_status', {
+        status: 'connecting',
+        provider: useMock ? 'MOCK' : 'TIKTOK_LIVE_CONNECTOR',
+      });
 
       try {
-        const provider = await createProvider(providerType, username, (logMsg) => {
-          console.log(logMsg);
-        });
+        const provider = useMock ? new MockProvider() : new TikTokLiveConnectorProvider();
+        await provider.connect(username);
 
         currentProvider = provider;
         this.activeConnections.set(username, { provider, username });
@@ -72,11 +76,11 @@ export class SocketServer {
 
         socket.emit('connection_status', {
           status: 'connected',
-          message: `Connected via ${provider.type}`,
+          message: `Connected via TikTok Live Connector`,
           provider: provider.type,
         });
       } catch (err: any) {
-        console.error(`[SocketServer] All providers failed:`, err);
+        console.error(`[SocketServer] Failed to connect:`, err);
         socket.emit('connection_status', {
           status: 'error',
           message: err.message || 'Failed to connect',

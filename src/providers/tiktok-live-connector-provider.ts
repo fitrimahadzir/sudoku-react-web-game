@@ -9,20 +9,35 @@ export class TikTokLiveConnectorProvider extends BaseProvider {
 
   async connect(username: string): Promise<void> {
     this.username = username;
-    this.setStatus('connecting', `Connecting via TikTok Live Connector for ${username}`);
+    this.setStatus('connecting', `Connecting to TikTok Live for ${username}`);
 
     try {
       this.disconnect();
 
-      const tiktokLiveConnection = new WebcastPushConnection(username, {
+      const signApiKey = process.env.TIKTOK_SIGN_API_KEY || undefined;
+      const sessionId = process.env.TIKTOK_SESSION_ID || undefined;
+
+      const options: Record<string, any> = {
         processInitialData: false,
         enableExtendedGiftInfo: true,
         requestPollingIntervalMs: 2000,
+        disableEulerFallbacks: true,
         clientParams: {
           app_language: 'en-US',
           device_platform: 'web',
         },
-      });
+      };
+
+      if (sessionId) {
+        options.sessionId = sessionId;
+        options.authenticateWs = true;
+      }
+
+      if (signApiKey) {
+        options.signApiKey = signApiKey;
+      }
+
+      const tiktokLiveConnection = new WebcastPushConnection(username, options);
 
       this.connection = tiktokLiveConnection;
 
@@ -82,7 +97,14 @@ export class TikTokLiveConnectorProvider extends BaseProvider {
       const raw = err.message || '';
       const body = raw.match(/"([^"]+)"/);
       const detail = body ? body[1] : raw;
-      const msg = `TikTok Live: ${detail}. Get a valid TIKTOK_SIGN_API_KEY from https://www.eulerstream.com`;
+      const hints: string[] = [];
+      if (process.env.TIKTOK_SESSION_ID) {
+        hints.push('TIKTOK_SESSION_ID may be invalid or expired');
+      } else {
+        hints.push('Set TIKTOK_SESSION_ID (TikTok session cookie) for free self-hosted connection');
+      }
+      hints.push('Or set TIKTOK_SIGN_API_KEY from https://www.eulerstream.com');
+      const msg = `TikTok Live: ${detail}. ${hints.join('; ')}`;
       this.setStatus('error', msg);
       this.emitError(msg);
       throw new Error(msg);
