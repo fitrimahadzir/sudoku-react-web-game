@@ -288,7 +288,7 @@ export default function SudokuGame({ difficulty, onBack, authUser, authProfile, 
 
     const socket = socketRef.current;
 
-    const handleChat = (data: { nickname: string, comment: string, profilePictureUrl?: string }) => {
+    const handleComment = (data: { uniqueId: string, nickname: string, comment: string, profilePictureUrl: string }) => {
       const match = data.comment.match(/^\s*(?:([a-iA-I])([1-9])|([1-9])([a-iA-I]))\s*([1-9])\s*$/);
       if (match) {
         let c: number, r: number;
@@ -302,47 +302,39 @@ export default function SudokuGame({ difficulty, onBack, authUser, authProfile, 
         const value = parseInt(match[5], 10);
         lastTiktokNicknameRef.current = data.nickname;
         lastTiktokProfilePicRef.current = data.profilePictureUrl || '';
-        applyInput(r, c, value, true, 'tiktok', data.nickname);
+        applyInput(r, c, value, true, 'tiktok', data.uniqueId);
       }
     };
 
-    const handleConnected = () => {
+    const handleConnectionStatus = (event: { status: string, message?: string, provider?: string }) => {
       if (tiktokErrorTimeoutRef.current) {
         clearTimeout(tiktokErrorTimeoutRef.current);
         tiktokErrorTimeoutRef.current = null;
       }
-      setTiktokStatus("connected");
-      setTiktokError("");
-    };
-
-    const handleDisconnected = (reason: string) => {
-      if (tiktokErrorTimeoutRef.current) {
-        clearTimeout(tiktokErrorTimeoutRef.current);
-        tiktokErrorTimeoutRef.current = null;
-      }
-      setTiktokStatus("disconnected");
-      setTiktokError(reason);
-    };
-
-    const handleError = (error: string) => {
-      if (tiktokErrorTimeoutRef.current) clearTimeout(tiktokErrorTimeoutRef.current);
-      tiktokErrorTimeoutRef.current = setTimeout(() => {
+      if (event.status === 'connected') {
+        setTiktokStatus("connected");
+        setTiktokError("");
+      } else if (event.status === 'connecting') {
+        setTiktokStatus("connecting");
+        setTiktokError("");
+      } else if (event.status === 'error') {
+        tiktokErrorTimeoutRef.current = setTimeout(() => {
+          setTiktokStatus("disconnected");
+          setTiktokError(event.message || 'Connection error');
+          tiktokErrorTimeoutRef.current = null;
+        }, 2000);
+      } else {
         setTiktokStatus("disconnected");
-        setTiktokError(error);
-        tiktokErrorTimeoutRef.current = null;
-      }, 2000);
+        setTiktokError(event.message || '');
+      }
     };
 
-    socket.on('tiktok_chat', handleChat);
-    socket.on('tiktok_connected', handleConnected);
-    socket.on('tiktok_disconnected', handleDisconnected);
-    socket.on('tiktok_error', handleError);
+    socket.on('comment', handleComment);
+    socket.on('connection_status', handleConnectionStatus);
 
     return () => {
-      socket.off('tiktok_chat', handleChat);
-      socket.off('tiktok_connected', handleConnected);
-      socket.off('tiktok_disconnected', handleDisconnected);
-      socket.off('tiktok_error', handleError);
+      socket.off('comment', handleComment);
+      socket.off('connection_status', handleConnectionStatus);
     };
   }, [applyInput]);
 
