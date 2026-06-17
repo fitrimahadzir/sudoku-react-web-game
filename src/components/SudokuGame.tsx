@@ -886,7 +886,7 @@ export default function SudokuGame({ difficulty, onBack, authUser, authProfile, 
                                        textClass = "text-[#1D4ED8] font-normal";
                                        if (tiktokStatus === 'connected') {
                                            if (cell.source === 'tiktok' && cell.nickname === 'fitri.mahadzir') {
-                                               textClass = "text-cyan-400 font-bold";
+                                               textClass = "text-blue-900 font-bold";
                                            } else if (cell.source === 'tiktok') {
                                                textClass = "text-purple-600 font-bold";
                                            } else {
