@@ -11,6 +11,7 @@ export interface SudokuCell {
   isError: boolean;
   notes: number[];
   source?: 'user' | 'tiktok';
+  nickname?: string;
 }
 
 export interface SudokuBoardState {

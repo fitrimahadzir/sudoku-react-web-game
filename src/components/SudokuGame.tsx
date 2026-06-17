@@ -126,7 +126,7 @@ export default function SudokuGame({ difficulty, onBack, authUser, authProfile, 
     setSelectedCell({ r, c });
   };
 
-  const applyInput = useCallback((r: number, c: number, value: number, forceValueMode = false, source: 'user' | 'tiktok' = 'user') => {
+  const applyInput = useCallback((r: number, c: number, value: number, forceValueMode = false, source: 'user' | 'tiktok' = 'user', nickname?: string) => {
     if (!boardState || isCompleted || (difficulty !== 'sado' && mistakes >= mistakeLimit)) return;
     const cell = boardState.grid[r][c];
 
@@ -204,6 +204,7 @@ export default function SudokuGame({ difficulty, onBack, authUser, authProfile, 
       value,
       isError,
       source: value === 0 ? undefined : source,
+      nickname: value === 0 ? undefined : nickname,
       notes: [], // Always clear notes when setting a value or erasing
     };
 
@@ -301,7 +302,7 @@ export default function SudokuGame({ difficulty, onBack, authUser, authProfile, 
         const value = parseInt(match[5], 10);
         lastTiktokNicknameRef.current = data.nickname;
         lastTiktokProfilePicRef.current = data.profilePictureUrl || '';
-        applyInput(r, c, value, true, 'tiktok');
+        applyInput(r, c, value, true, 'tiktok', data.nickname);
       }
     };
 
@@ -889,20 +890,22 @@ export default function SudokuGame({ difficulty, onBack, authUser, authProfile, 
                                    textClass = "text-white";
                                  }
 
-                                  if (!cell.isInitial && cell.value !== 0) {
-                                      textClass = "text-[#1D4ED8] font-normal";
-                                      if (tiktokStatus === 'connected') {
-                                          if (cell.source === 'tiktok') {
-                                              textClass = "text-purple-600 font-bold";
-                                          } else {
-                                              textClass = "text-emerald-500 font-bold";
-                                          }
+                                   if (!cell.isInitial && cell.value !== 0) {
+                                       textClass = "text-[#1D4ED8] font-normal";
+                                       if (tiktokStatus === 'connected') {
+                                           if (cell.source === 'tiktok' && cell.nickname === 'fitri.mahadzir') {
+                                               textClass = "text-cyan-400 font-bold";
+                                           } else if (cell.source === 'tiktok') {
+                                               textClass = "text-purple-600 font-bold";
+                                           } else {
+                                               textClass = "text-emerald-500 font-bold";
+                                           }
+                                       }
+                                      if (cell.isError) {
+                                          textClass = "text-rose-500 font-medium";
+                                          if (!isSelected) bgClass = "bg-rose-50";
                                       }
-                                     if (cell.isError) {
-                                         textClass = "text-rose-500 font-medium";
-                                         if (!isSelected) bgClass = "bg-rose-50";
-                                     }
-                                 }
+                                  }
 
                                  let cellContent: React.ReactNode = cellValue;
                                  if (cell.value === 0 && cell.notes && cell.notes.length > 0) {
