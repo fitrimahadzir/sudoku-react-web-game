@@ -48,12 +48,7 @@ export async function createProvider(
     tlc.disconnect();
   }
 
-  await sleep(500);
-
-  log('[Provider] Switching To Mock Provider');
-  const mock = new MockProvider();
-  await mock.connect(username);
-  return mock;
+  throw new Error('All TikTok providers failed. Set TIKTOK_PROVIDER=MOCK to use mock mode.');
 }
 
 function buildProvider(type: Exclude<ProviderType, 'AUTO'>): TikTokProvider {

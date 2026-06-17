@@ -7,9 +7,10 @@ const fakeUsernames = [
 ];
 
 const fakeComments = [
-  'A1 5', 'B2 3', 'C3 7', 'D4 9', 'E5 1',
-  'F6 4', 'G7 2', 'H8 8', 'I9 6',
-  'A3 2', 'B5 7', 'C7 9',
+  'Hello everyone!', 'Nice game!', 'Let us play!',
+  'Good morning', 'Awesome stream', 'First time here',
+  'Love this game', 'So fun!', 'How to play?',
+  'Great job host', 'I love sudoku', 'This is cool',
 ];
 
 export class MockProvider extends BaseProvider {
