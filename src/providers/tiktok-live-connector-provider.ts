@@ -11,6 +11,10 @@ export class TikTokLiveConnectorProvider extends BaseProvider {
     this.username = username;
     this.setStatus('connecting', `Connecting via TikTok Live Connector for ${username}`);
 
+    // Backup and remove TIKTOK_SIGN_API_KEY so library uses direct connection
+    const existingKey = process.env.TIKTOK_SIGN_API_KEY;
+    delete process.env.TIKTOK_SIGN_API_KEY;
+
     try {
       this.disconnect();
 
@@ -85,6 +89,8 @@ export class TikTokLiveConnectorProvider extends BaseProvider {
       this.setStatus('error', msg);
       this.emitError(msg);
       throw new Error(msg);
+    } finally {
+      if (existingKey) process.env.TIKTOK_SIGN_API_KEY = existingKey;
     }
   }
 
