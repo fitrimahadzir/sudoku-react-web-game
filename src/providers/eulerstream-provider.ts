@@ -82,10 +82,9 @@ export class EulerStreamProvider extends BaseProvider {
     } catch (err: any) {
       this.connection = null;
       const raw = err.message || '';
-      const match = raw.match(/"([^"]+)"/);
-      const msg = match
-        ? `EulerStream: ${match[1]}. Remove TIKTOK_SIGN_API_KEY or get a new key.`
-        : `EulerStream: ${raw}`;
+      const body = raw.match(/"([^"]+)"/);
+      const detail = body ? body[1] : raw;
+      const msg = `EulerStream: ${detail}. Get a new key at https://www.eulerstream.com`;
       this.setStatus('error', msg);
       this.emitError(msg);
       throw new Error(msg);

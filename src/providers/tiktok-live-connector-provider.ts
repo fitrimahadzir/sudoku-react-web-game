@@ -11,10 +11,6 @@ export class TikTokLiveConnectorProvider extends BaseProvider {
     this.username = username;
     this.setStatus('connecting', `Connecting via TikTok Live Connector for ${username}`);
 
-    // Backup and remove TIKTOK_SIGN_API_KEY so library uses direct connection
-    const existingKey = process.env.TIKTOK_SIGN_API_KEY;
-    delete process.env.TIKTOK_SIGN_API_KEY;
-
     try {
       this.disconnect();
 
@@ -83,14 +79,13 @@ export class TikTokLiveConnectorProvider extends BaseProvider {
       this.setStatus('connected', `Connected to room ${state.roomId}`);
     } catch (err: any) {
       this.connection = null;
-      const raw = err.message || 'Failed to connect to TikTok Live';
-      const match = raw.match(/"([^"]+)"/);
-      const msg = match ? `TikTok Live: ${match[1]}` : `TikTok Live: ${raw}`;
+      const raw = err.message || '';
+      const body = raw.match(/"([^"]+)"/);
+      const detail = body ? body[1] : raw;
+      const msg = `TikTok Live: ${detail}. Get a valid TIKTOK_SIGN_API_KEY from https://www.eulerstream.com`;
       this.setStatus('error', msg);
       this.emitError(msg);
       throw new Error(msg);
-    } finally {
-      if (existingKey) process.env.TIKTOK_SIGN_API_KEY = existingKey;
     }
   }
 
